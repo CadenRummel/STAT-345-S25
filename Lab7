@@ -1,6 +1,6 @@
 title: "My First R Markdown"
 output: html_document
 ---
-
+cd /path/to/your/project
 ```{r}
 print("Hello, GitHub!")
