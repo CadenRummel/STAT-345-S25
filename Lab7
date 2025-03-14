@@ -1,1 +1,6 @@
+title: "My First R Markdown"
+output: html_document
+---
 
+```{r}
+print("Hello, GitHub!")
