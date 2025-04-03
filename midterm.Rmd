@@ -1,0 +1,252 @@
+---
+title: "STAT 345 Midterm Project"
+font: 12pt
+date: "Due April 4"
+Name: "Caden Rummel"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+> "Our offense is like the Pythagorean Theorem. There is no answer!", _Shaquille O'Neal_
+
+## The Background
+
+Your role for the midterm project is that of data analyst intern at an NBA (professional basketball) team. Your direct supervisor (also part of the analytics team) has asked you to create a data visualization to illustrate how (or if) the team's shots have changed over time. After some initial clarifying questions, your supervisor confessed that they had seen some pretty cool shot charts at http://savvastjortjoglou.com/nba-shot-sharts.html and would like to extend the ideas a bit. 
+
+Your data for the midterm project may come from a variety of sources, including the NBA directly, as well as Basketball-Reference, HoopsHype, and others. There are several ways to access the data, but perhaps the simplest is through the `nbastatR` package, which serves as a wrapper (or set of helper functions) for these various data sources. There is a lot of potentially useful information that can be found using this package; unfortunately, the documentation is somewhat inconsistent. For example, the documentation at https://www.rdocumentation.org/packages/nbastatR/versions/0.1.110202031 is pretty well-formatted and easy to navigate, but the current function names have changed a bit (see `?nbastatR` and click "Index"). (If you use the nbastatR package, you'll want to install the package using the following code. There are other packages with this type of data, though.) You are welcome to scrape other websites or use other packages if you choose.
+
+```
+library(devtools)
+devtools::install_github("abresler/nbastatR")
+```
+
+## The Tasks
+
+1. (30 points) Produce a graphic displaying the shot locations for a particular team over several years. Some notes:
+
+   - Colors should be chosen to reflect the team, if possible.
+   - There are likely many overlaid points -- handle this by either binning these by location, or use opacity.
+   - Incorporate information about whether the shot was made or not (shape, color, etc.).
+   - The graphic should be well-labeled, titled, etc.
+   - Start with a graph for a single year, then extend to several years. Up to 20 years of shot data is available. Either facet these by year or animate using the years.
+   - You'll want to figure out what the coordinates mean somehow. This might be through the documentation, but could also be determined using aspects of the data itself and the dimensions of an NBA court.
+    - Put a basketball court on the background of the image (you'll need to scale it appropriately).
+
+
+```{r}
+
+library(devtools)
+devtools::install_github("abresler/nbastatR@aba9179ef644f263387c1536d6ddd26104d79cf4")
+```
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+library(png)
+library(dplyr)
+library(magrittr)
+library(RColorBrewer)
+library(nbastatR)
+library(grid)
+Sys.setenv("VROOM_CONNECTION_SIZE" = 1000000)
+
+```
+
+
+```{r}
+B2006 <- teams_shots(teams = "Bucks", seasons = 2006, return_message = F)
+B2008 <- teams_shots(teams = "Bucks", seasons = 2008, return_message = F)
+B2010 <- teams_shots(teams = "Bucks", seasons = 2010, return_message = F)
+B2012 <- teams_shots(teams = "Bucks", seasons = 2012, return_message = F)
+B2014 <- teams_shots(teams = "Bucks", seasons = 2014, return_message = F)
+B2016 <- teams_shots(teams = "Bucks", seasons = 2016, return_message = F)
+B2018 <- teams_shots(teams = "Bucks", seasons = 2018, return_message = F)
+B2020 <- teams_shots(teams = "Bucks", seasons = 2020, return_message = F)
+B2022 <- teams_shots(teams = "Bucks", seasons = 2022, return_message = F)
+B2024 <- teams_shots(teams = "Bucks", seasons = 2024, return_message = F)
+Bdata <- bind_rows(B2006, B2008,B2010,B2012,B2014,B2016,B2018,B2020,B2022,B2024)
+
+```
+```{r,echo=FALSE,warning=FLASE,message=FALSE}
+court_img <- "courtimage.png"
+court_img2 <- readPNG(court_img, native = TRUE)
+court_plot <- rasterGrob(court_img2, interpolate = TRUE)
+
+base_plot <- ggplot(Bdata, aes(locationX, locationY)) +
+  annotation_custom(court_plot, xmin = -293, xmax = 293, ymin = -575, ymax = 200) +
+    geom_point(aes(color = isShotMade), alpha = .2,size = .25) +
+  xlim(-250, 250) + ylim(670, -10) +
+  ggtitle(paste("2005-2024 Milwaukee Bucks Shot Chart"))+
+  xlab("Shot Location")+
+  ylab("Shot Location")+
+  facet_wrap(vars(slugSeason), nrow = 2)+
+  scale_color_manual(values = c("red", "blue"), labels = c("Miss", "Make"), name = "Result")
+panel.grid.major=element_blank()
+panel.grid.minor=element_blank()
+
+base_plot
+```
+    
+   
+2. (30 points) Summarize the graphic/series of graphics into a digestible, bullet-point brief report for front-office staff. Some notes:
+
+   - The main body of the report should be very brief -- just the graphic(s) and the bullet-pointed list of findings, which should be short and clear.
+   - Include a more detailed explanation of these bullet points, for further reading by those interested. This section should follow the bullet-point section, but should be organized similarly for reference. 
+   - Your report to the front-office shouldn't include any code.
+   - This report should be generated using RMarkdown. However, the choice of output type (Word, PDF, or HTML) is up to you (you could even make slides if you want to). 
+```{r}
+
+library(pdftools)
+
+pdf_text <- pdf_text("MidtermBriefReport.pdf")
+
+
+print(pdf_text)
+```
+   
+   
+3. (30 points) Write and document clean, efficient, reproducible code. Some notes:
+
+   - This code will be viewed by your direct supervisor.
+   - The code file should include your code to gather, join, and clean the data; the code to generate the graphic(s) presented; and your commentary on the results (so, a single .rmd file, or an .rmd file that sources an .r file).
+   - Your code should be clean, organized, and reproducible. Remove unnecessary/scratch/exploratory code.
+   - Your code should be well commented. In particular, any decisions or judgement calls made in the analysis process should be explained/justified. Sections of code should be identified even if not functionalized (including purpose, data/argument inputs, analysis outputs).
+```{r, echo=FALSE,warning=FLASE,message=False}
+# Load Required Libraries
+library(devtools)
+library(ggplot2)
+library(gridExtra)
+library(png)
+library(dplyr)
+library(magrittr)
+library(RColorBrewer)
+library(nbastatR)
+library(grid)
+
+# Setting environment variable to optimize data handling.
+Sys.setenv("VROOM_CONNECTION_SIZE" = 1000000)
+
+```
+   
+```{r, echo=FALSE,warning=FLASE,message=FALSE}
+# Fetch Milwaukee Bucks shot data for specified seasons using nbastatR.
+# Justification: These seasons were chosen to analyze long-term trends.
+
+# Retrieve shot data for each season and bind into one dataframe.
+seasons <- c(2006, 2008, 2010, 2012, 2014, 2016, 2018, 2020, 2022, 2024)
+Bdata <- purrr::map_df(seasons, ~teams_shots(teams = "Bucks", seasons = .x, return_message = FALSE))
+
+# Commentary:
+# purrr::map_df() to iterate over the season list and load the data for each season. 
+```
+   
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+# Load court image for visualization.
+# Justification: Provides context to shot locations by overlaying the data on a court diagram.
+court_img <- "courtimage.png"  # Path to the court image file
+court_img2 <- readPNG(court_img, native = TRUE)  # Read image as a PNG object
+court_plot <- rasterGrob(court_img2, interpolate = TRUE)  # Prepare the image for use in the plot
+
+# Create the base shot plot with court image and shot locations
+base_plot <- ggplot(Bdata, aes(locationX, locationY)) +
+  # Add the basketball court as background
+  annotation_custom(court_plot, xmin = -293, xmax = 293, ymin = -575, ymax = 200) +
+  # Plot the shot locations, color by whether the shot was made
+  geom_point(aes(color = isShotMade), alpha = 0.2, size = 0.25) +
+  # Set axis limits and title
+  xlim(-250, 250) + ylim(670, -10) +
+  ggtitle("2005-2024 Milwaukee Bucks Shot Chart") +
+  xlab("Shot Location") +
+  ylab("Shot Location") +
+  # Facet by season to show shot charts for each year
+  facet_wrap(vars(slugSeason), nrow = 2) +
+  # Custom colors for shot outcomes (red for miss, blue for make)
+  scale_color_manual(values = c("red", "blue"), labels = c("Miss", "Make"), name = "Shot Result") +
+  # Remove gridlines for a cleaner look
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+# Display the plot
+base_plot
+
+
+```
+   
+4. (10 points) Above and Beyond. Choose either option below. You are welcome to explore both, but only one is required. 
+
+  - Option 1: Explore the data a bit, and create a graphic that uses (or incorporates) different information than what was used above. Some notes:
+    - Create an additional graphic that incorporates at least one additional variable not previously used (this should add to the graphic in part 1). The additional data should be drawn from a different dataset (function call) than the original graphic used. These two (or more) datasets may need to be joined appropriately.
+    - You can either add more information to the plot above, or create a different plot. 
+     - Formatting, labelling, etc. are all important here too.
+    - Adding marginal densities or other "bells and whistles" might offer additional insight.
+    - This graphic should be included at the end of the report (after the more detailed explanations). 
+     - You should include a brief description of the graphic (highlighting the different/additional information used).
+  - Option 2: If the NBA were to incorporate a 4-point shot, where would you draw a 4-point arc? Some notes:
+    - You likely should base your decision at least partly on proportion of shots made from a given range. You might consider an expected value calculation here.
+    - Your arc can be shaped as you see fit; simple arcs are sufficient for this exploration.
+    - Provide an example of a consequence (positive or negative) if a 4-point shot was incorporated. (e.g., "my_favorite_player's season point total would increase by x%")
+    - You do not need to create a plot representing your arc, though you are welcome to do so!!
+    
+
+```{r}
+dat<-B2016
+d<-dat$distanceShot
+s<-dat$isShotMade
+
+results <- data.frame(distance = integer(), mean_makes = numeric())
+for (distance in 23:40) {
+
+  filtered_data <- dat %>% filter(distanceShot > distance)
+  
+  filtered_s <- filtered_data$isShotMade
+
+  mean_makes <- mean(filtered_s, na.rm = TRUE)
+
+  results <- rbind(results, data.frame(distance = distance, mean_makes = mean_makes))
+}
+print(results)
+#drop from 28 feet to 29 feet
+
+```
+    
+```{r}
+court_img <- "courtimage.png"  
+court_img2 <- readPNG(court_img, native = TRUE)  
+court_plot <- rasterGrob(court_img2, interpolate = TRUE)  
+
+
+base_plott <- ggplot() +
+  annotation_custom(court_plot, xmin = -293, xmax = 293, ymin = -575, ymax = 200) +
+  
+  annotate("path", 
+           x = 200 * cos(seq(0, pi, length.out = 750)), 
+           y = 375 * sin(seq(0, pi, length.out = 750)), 
+           color = "green", 
+           size =1) +  # 4-point arc
+  # Customize other plot elements
+  xlim(-250, 250) + ylim(670, -10) +
+  ggtitle("Milwaukee Bucks Shot Chart with 4-Point Arc") +
+  xlab("Shot Location") +
+  ylab("Shot Location") +
+  theme_minimal()
+
+print(base_plott)
+```
+
+    
+    
+
+
+
+  
+## The Deliverables
+
+1. Upload your report and code file(s) to GitHub by 11:00am on Friday, April 4.
+2. Submit (on Canvas) your report, code, and link to your GitHub repository by 11:00am on Friday, April 4.
+  
+  
+  
+  
+
+
